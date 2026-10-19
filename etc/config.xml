@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!--
+    Copyright © 2026 Roman Pasichnyk
+    SPDX-License-Identifier: OSL-3.0 OR AFL-3.0
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <zero_redirects>
+            <log>
+                <enabled>0</enabled>
+                <keep_days>90</keep_days>
+                <ignore>wp-admin
+wp-login
+wp-content
+wp-includes
+xmlrpc
+.env
+.git
+phpmyadmin
+cgi-bin</ignore>
+            </log>
+        </zero_redirects>
+    </default>
+</config>

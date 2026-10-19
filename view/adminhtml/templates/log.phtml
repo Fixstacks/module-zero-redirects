@@ -1,0 +1,119 @@
+<?php
+/**
+ * Copyright © 2026 Roman Pasichnyk
+ * SPDX-License-Identifier: OSL-3.0 OR AFL-3.0
+ *
+ * Marketing > SEO & Search > 404 Log: the storefront's missing addresses,
+ * most asked for first. An open one gets a target (a suggested product,
+ * category or page when one is close) and Redirect (301), or Ignore.
+ *
+ * @var \Magento\Backend\Block\Template $block
+ * @var \Magento\Framework\Escaper $escaper
+ */
+/** @var \Zero\Redirects\ViewModel\Admin $admin */
+$admin = $block->getData('view_model');
+$status = $admin->status();
+$search = $admin->search();
+$rows = $admin->rows();
+$page = $admin->currentPage();
+$last = $admin->lastPage();
+$listUrl = $admin->url('zero_redirects/log/index');
+$saveUrl = $admin->url('zero_redirects/log/save');
+$hidden = static function () use ($escaper, $block, $status, $search, $page): string {
+    return sprintf(
+        '<input type="hidden" name="form_key" value="%s"><input type="hidden" name="back_status" value="%s"><input type="hidden" name="back_q" value="%s"><input type="hidden" name="back_p" value="%d">',
+        $escaper->escapeHtmlAttr($block->getFormKey()),
+        $escaper->escapeHtmlAttr($status),
+        $escaper->escapeHtmlAttr($search),
+        $page
+    );
+};
+?>
+<p style="max-width: 820px;">
+    <?= $escaper->escapeHtml(__('Storefront addresses that answered "page not found". Redirect one with a 301 (a URL rewrite you also find in Marketing > URL Rewrites) to keep its visitors and its search ranking, or ignore it. Hits from the page cache aren\'t counted: the numbers are a lower bound.')) ?>
+</p>
+<?php $logging = $admin->isLogging(); ?>
+<form method="post" action="<?= $escaper->escapeUrl($admin->url('zero_redirects/log/toggle')) ?>"
+      class="message <?= $logging ? 'message-success' : 'message-warning' ?>" style="display: flex; gap: 12px; align-items: center; max-width: 820px; margin: 12px 0;" data-redirects-logging="<?= $logging ? 'on' : 'off' ?>">
+    <input type="hidden" name="form_key" value="<?= $escaper->escapeHtmlAttr($block->getFormKey()) ?>">
+    <input type="hidden" name="logging" value="<?= $logging ? '0' : '1' ?>">
+    <span style="flex: 1;"><?= $escaper->escapeHtml($logging
+        ? __('Logging is on: the storefront\'s 404s are recorded.')
+        : __('Logging is off: no 404 is recorded until you turn it on.')) ?></span>
+    <button type="submit" class="<?= $logging ? 'action-default' : 'action-primary' ?>" data-redirects-toggle>
+        <?= $escaper->escapeHtml($logging ? __('Turn Logging Off') : __('Turn Logging On')) ?>
+    </button>
+</form>
+<form method="get" action="<?= $escaper->escapeUrl($listUrl) ?>" style="margin: 15px 0; display: flex; gap: 8px; flex-wrap: wrap;" data-redirects-filter>
+    <select class="admin__control-select" name="status" aria-label="<?= $escaper->escapeHtmlAttr(__('Status')) ?>">
+        <?php foreach ($admin->statuses() as $value => $label) : ?>
+            <option value="<?= $escaper->escapeHtmlAttr($value) ?>" <?= $value === $status ? 'selected' : '' ?>><?= $escaper->escapeHtml($label) ?></option>
+        <?php endforeach; ?>
+    </select>
+    <input class="admin__control-text" type="search" name="q" value="<?= $escaper->escapeHtmlAttr($search) ?>"
+           placeholder="<?= $escaper->escapeHtmlAttr(__('Address contains')) ?>" aria-label="<?= $escaper->escapeHtmlAttr(__('Address contains')) ?>">
+    <button type="submit" class="action-default"><?= $escaper->escapeHtml(__('Show')) ?></button>
+</form>
+
+<?php if (!$rows) : ?>
+    <p data-redirects-empty><?= $escaper->escapeHtml(__('Nothing here.')) ?></p>
+<?php else : ?>
+    <table class="data-grid" data-redirects-log>
+        <thead>
+            <tr>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Address')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Hits')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Last Seen (UTC)')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Linked From')) ?></th>
+                <th class="data-grid-th"><?= $escaper->escapeHtml(__('Action')) ?></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($rows as $row) : ?>
+                <?php $suggestion = $admin->suggestion($row); ?>
+                <tr data-redirects-row="<?= $escaper->escapeHtmlAttr($row['path']) ?>">
+                    <td style="max-width: 360px; word-break: break-all;">
+                        <a href="<?= $escaper->escapeUrl($admin->storefrontUrl($row)) ?>" target="_blank" rel="noopener">/<?= $escaper->escapeHtml($row['path']) ?></a>
+                        <br><small><?= $escaper->escapeHtml($admin->storeName($row)) ?></small>
+                    </td>
+                    <td><?= (int) $row['hits'] ?></td>
+                    <td style="white-space: nowrap;"><?= $escaper->escapeHtml($row['last_seen_at']) ?></td>
+                    <td style="max-width: 220px; word-break: break-all;"><small><?= $escaper->escapeHtml((string) $row['referer']) ?></small></td>
+                    <td>
+                        <?php if ($row['status'] === \Zero\Redirects\Model\Log::OPEN) : ?>
+                            <form method="post" action="<?= $escaper->escapeUrl($saveUrl) ?>" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                                <?= /* @noEscape */ $hidden() ?>
+                                <input type="hidden" name="id" value="<?= (int) $row['log_id'] ?>">
+                                <input class="admin__control-text" type="text" name="target" style="width: 260px;"
+                                       value="<?= $escaper->escapeHtmlAttr($suggestion !== '' ? '/' . $suggestion : '') ?>"
+                                       placeholder="<?= $escaper->escapeHtmlAttr(__('/new-page.html or https://…')) ?>"
+                                       aria-label="<?= $escaper->escapeHtmlAttr(__('Redirect to')) ?>">
+                                <button type="submit" name="do" value="redirect" class="action-primary"><?= $escaper->escapeHtml(__('Redirect')) ?></button>
+                                <button type="submit" name="do" value="ignore" class="action-default"><?= $escaper->escapeHtml(__('Ignore')) ?></button>
+                            </form>
+                            <?php if ($suggestion !== '') : ?><small><?= $escaper->escapeHtml(__('Suggested from the catalog')) ?></small><?php endif; ?>
+                        <?php else : ?>
+                            <?php if ($row['status'] === \Zero\Redirects\Model\Log::REDIRECTED) : ?>
+                                <?= $escaper->escapeHtml(__('Redirected')) ?>
+                                <?php if ($admin->rewriteUrl($row) !== '') : ?> · <a href="<?= $escaper->escapeUrl($admin->rewriteUrl($row)) ?>"><?= $escaper->escapeHtml(__('Edit the rewrite')) ?></a><?php endif; ?>
+                            <?php else : ?>
+                                <form method="post" action="<?= $escaper->escapeUrl($saveUrl) ?>" style="display: inline;">
+                                    <?= /* @noEscape */ $hidden() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $row['log_id'] ?>">
+                                    <?= $escaper->escapeHtml(__('Ignored')) ?> · <button type="submit" name="do" value="reopen" class="action-default"><?= $escaper->escapeHtml(__('Reopen')) ?></button>
+                                </form>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php if ($last > 1) : ?>
+        <p style="margin-top: 12px; display: flex; gap: 12px;">
+            <?php if ($page > 1) : ?><a href="<?= $escaper->escapeUrl($admin->url('zero_redirects/log/index', ['status' => $status, 'q' => $search, 'p' => $page - 1])) ?>">&larr; <?= $escaper->escapeHtml(__('Previous')) ?></a><?php endif; ?>
+            <span><?= $escaper->escapeHtml(__('Page %1 of %2', $page, $last)) ?></span>
+            <?php if ($page < $last) : ?><a href="<?= $escaper->escapeUrl($admin->url('zero_redirects/log/index', ['status' => $status, 'q' => $search, 'p' => $page + 1])) ?>"><?= $escaper->escapeHtml(__('Next')) ?> &rarr;</a><?php endif; ?>
+        </p>
+    <?php endif; ?>
+<?php endif; ?>

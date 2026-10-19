@@ -1,0 +1,27 @@
+{
+    "zero_redirects_404": {
+        "column": {
+            "log_id": true,
+            "store_id": true,
+            "path": true,
+            "referer": true,
+            "hits": true,
+            "first_seen_at": true,
+            "last_seen_at": true,
+            "status": true,
+            "url_rewrite_id": true,
+            "suggested_path": true,
+            "suggested": true
+        },
+        "index": {
+            "ZERO_REDIRECTS_404_STATUS_HITS": true,
+            "ZERO_REDIRECTS_404_LAST_SEEN_AT": true,
+            "ZERO_REDIRECTS_404_SUGGESTED": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "ZERO_REDIRECTS_404_STORE_ID_PATH": true,
+            "ZERO_REDIRECTS_404_STORE_ID_STORE_STORE_ID": true
+        }
+    }
+}

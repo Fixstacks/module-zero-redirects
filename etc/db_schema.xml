@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+    Copyright © 2026 Roman Pasichnyk
+    SPDX-License-Identifier: OSL-3.0 OR AFL-3.0
+
+    One row per store view and missing address: how often it was asked for,
+    when first and last, the last page that linked to it, what the store did
+    about it (open, redirected with the URL rewrite's id, ignored), and the
+    likely target cron found for it. Written by cron from the buffer file,
+    never by a storefront request.
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="zero_redirects_404" resource="default" engine="innodb" comment="Zero Redirects: 404 log">
+        <column xsi:type="int" name="log_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Log ID"/>
+        <column xsi:type="smallint" name="store_id" padding="5" unsigned="true" nullable="false" comment="Store View"/>
+        <column xsi:type="varchar" name="path" nullable="false" length="255" comment="Requested path, relative to the store view"/>
+        <column xsi:type="varchar" name="referer" nullable="true" length="512" comment="Last referring page"/>
+        <column xsi:type="int" name="hits" padding="10" unsigned="true" nullable="false" default="1" comment="Hits"/>
+        <column xsi:type="timestamp" name="first_seen_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="First Seen"/>
+        <column xsi:type="timestamp" name="last_seen_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Last Seen"/>
+        <column xsi:type="varchar" name="status" nullable="false" length="16" default="open" comment="open, redirected, ignored"/>
+        <column xsi:type="int" name="url_rewrite_id" padding="10" unsigned="true" nullable="true" comment="The redirect made for it"/>
+        <column xsi:type="varchar" name="suggested_path" nullable="true" length="255" comment="A likely target, worked out by cron"/>
+        <column xsi:type="smallint" name="suggested" padding="5" unsigned="true" nullable="false" default="0" comment="Suggestion worked out (found or not)"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="log_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="ZERO_REDIRECTS_404_STORE_ID_PATH">
+            <column name="store_id"/>
+            <column name="path"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="ZERO_REDIRECTS_404_STORE_ID_STORE_STORE_ID"
+                    table="zero_redirects_404" column="store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <index referenceId="ZERO_REDIRECTS_404_STATUS_HITS" indexType="btree">
+            <column name="status"/>
+            <column name="hits"/>
+        </index>
+        <index referenceId="ZERO_REDIRECTS_404_LAST_SEEN_AT" indexType="btree">
+            <column name="last_seen_at"/>
+        </index>
+        <index referenceId="ZERO_REDIRECTS_404_SUGGESTED" indexType="btree">
+            <column name="suggested"/>
+        </index>
+    </table>
+</schema>
