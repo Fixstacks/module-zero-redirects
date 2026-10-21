@@ -1,8 +1,8 @@
 {
-    "name": "fixstacks/module-zero-redirects",
+    "name": "zerofront/module-zero-redirects",
     "description": "Zero for Magento Open Source: a log of the storefront's 404s, most asked for first, and a 301 redirect for each in one click, with a suggested target from the catalog.",
     "type": "magento2-module",
-    "version": "1.3.2",
+    "version": "1.3.3",
     "license": [
         "OSL-3.0",
         "AFL-3.0"
@@ -12,7 +12,7 @@
             "name": "Roman Pasichnyk"
         }
     ],
-    "homepage": "https://fixstacks.com/zero",
+    "homepage": "https://zerofront.dev",
     "keywords": [
         "magento",
         "magento2",
@@ -31,6 +31,9 @@
         "magento/module-cron": "*",
         "magento/module-store": "*",
         "magento/module-url-rewrite": "*"
+    },
+    "replace": {
+        "fixstacks/module-zero-redirects": "self.version"
     },
     "autoload": {
         "files": [

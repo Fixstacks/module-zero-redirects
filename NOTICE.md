@@ -1,4 +1,4 @@
-# fixstacks/module-zero-redirects — licensing
+# zerofront/module-zero-redirects — licensing
 
 Copyright © 2026 Roman Pasichnyk.
 
